@@ -4,7 +4,6 @@ import { fal } from "@fal-ai/client"
 import { connectDB } from '@/lib/db'
 import History from '@/models/History'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -69,9 +68,11 @@ export async function POST(request: Request) {
           audio_url: audioUrl
         },
         logs: true,
-        onQueueUpdate: (update: { status: string; logs: { message: string }[] }) => {
-          if (update.status === "IN_PROGRESS") {
-            update.logs.map((log) => log.message).forEach(console.log);
+        onQueueUpdate: (status) => {
+          if (status.status === "IN_PROGRESS" && 'logs' in status) {
+            // Type guard to ensure logs exists
+            const queueStatus = status as { status: string; logs: { message: string }[] };
+            queueStatus.logs.map((log) => log.message).forEach(console.log);
           }
         },
       }) as FalResponse;

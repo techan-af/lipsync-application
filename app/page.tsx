@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, forwardRef } from "react"
 import axios from "axios"
 import { Widget } from '@uploadcare/react-widget'
 
@@ -13,9 +13,11 @@ interface FileInfo {
   mimeType: string;
 }
 
+/* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
 interface HistoryItem {
   syncedVideoUrl: string;
 }
+
 
 const Lipsync = () => {
   const [cloudinaryUrls, setCloudinaryUrls] = useState<CloudinaryUrls>({})
@@ -101,7 +103,6 @@ const Lipsync = () => {
                 handleFileUpload(fileInfo, 'audio')
               }
             }}
-            ref={null}
           />
         </div>
         <div className="mb-4">
@@ -113,7 +114,6 @@ const Lipsync = () => {
                 handleFileUpload(fileInfo, 'video')
               }
             }}
-            ref={null}
           />
         </div>
         <button
