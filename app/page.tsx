@@ -4,12 +4,25 @@ import React, { useState, useEffect } from "react"
 import axios from "axios"
 import { Widget } from '@uploadcare/react-widget'
 
+interface CloudinaryUrls {
+  syncedVideoUrl?: string;
+}
+
+interface FileInfo {
+  cdnUrl: string;
+  mimeType: string;
+}
+
+interface HistoryItem {
+  syncedVideoUrl: string;
+}
+
 const Lipsync = () => {
-  const [cloudinaryUrls, setCloudinaryUrls] = useState({})
+  const [cloudinaryUrls, setCloudinaryUrls] = useState<CloudinaryUrls>({})
   const [isLoading, setIsLoading] = useState(false)
-  const [history, setHistory] = useState([])
-  const [videoUploadcareUrl, setVideoUploadcareUrl] = useState(null)
-  const [audioUploadcareUrl, setAudioUploadcareUrl] = useState(null)
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [videoUploadcareUrl, setVideoUploadcareUrl] = useState<string | null>(null)
+  const [audioUploadcareUrl, setAudioUploadcareUrl] = useState<string | null>(null)
 
   const handleUpload = async () => {
     if (!audioUploadcareUrl || !videoUploadcareUrl) {
@@ -46,7 +59,7 @@ const Lipsync = () => {
     }
   }
 
-  const handleFileUpload = async (fileInfo, type) => {
+  const handleFileUpload = async (fileInfo: FileInfo, type: 'video' | 'audio') => {
     console.log(`Uploaded ${type} to Uploadcare:`, fileInfo)
     const cdnUrl = fileInfo.cdnUrl
 
@@ -57,7 +70,7 @@ const Lipsync = () => {
     }
   }
 
-  const validateFileType = (fileInfo, type) => {
+  const validateFileType = (fileInfo: FileInfo, type: 'video' | 'audio'): boolean => {
     const mimeType = fileInfo.mimeType
     if (type === 'video' && !mimeType.startsWith('video/')) {
       alert('Please upload a valid video file.')
@@ -82,23 +95,25 @@ const Lipsync = () => {
         <div className="mb-4">
           <label className="block mb-2">Audio File:</label>
           <Widget
-            publicKey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY}
-            onChange={(fileInfo) => {
+            publicKey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY || ''}
+            onChange={(fileInfo: FileInfo) => {
               if (validateFileType(fileInfo, 'audio')) {
                 handleFileUpload(fileInfo, 'audio')
               }
             }}
+            ref={null}
           />
         </div>
         <div className="mb-4">
           <label className="block mb-2">Video File:</label>
           <Widget
-            publicKey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY}
-            onChange={(fileInfo) => {
+            publicKey={process.env.NEXT_PUBLIC_UPLOADCARE_PUBLIC_KEY || ''}
+            onChange={(fileInfo: FileInfo) => {
               if (validateFileType(fileInfo, 'video')) {
                 handleFileUpload(fileInfo, 'video')
               }
             }}
+            ref={null}
           />
         </div>
         <button
@@ -127,7 +142,12 @@ const Lipsync = () => {
   )
 }
 
-const HistorySection = ({ history, isLoading }) => {
+interface HistorySectionProps {
+  history: HistoryItem[];
+  isLoading: boolean;
+}
+
+const HistorySection = ({ history, isLoading }: HistorySectionProps) => {
   return (
     <div className="bg-gray-100 p-6 rounded-lg">
       <h2 className="text-2xl font-bold mb-4">History</h2>

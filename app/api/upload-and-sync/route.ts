@@ -4,6 +4,8 @@ import { fal } from "@fal-ai/client"
 import { connectDB } from '@/lib/db'
 import History from '@/models/History'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -24,12 +26,23 @@ const uploadFromUrl = async (fileUrl: string) => {
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error)
     throw error
-
-
-    
   }
 }
 
+interface FalResponse {
+  data: {
+    video: {
+      url: string
+    }
+  }
+}
+
+interface FalError extends Error {
+  status?: number
+  body?: {
+    status: number
+  }
+}
 
 export async function POST(request: Request) {
   await connectDB();
@@ -56,12 +69,12 @@ export async function POST(request: Request) {
           audio_url: audioUrl
         },
         logs: true,
-        onQueueUpdate: (update) => {
+        onQueueUpdate: (update: { status: string; logs: { message: string }[] }) => {
           if (update.status === "IN_PROGRESS") {
             update.logs.map((log) => log.message).forEach(console.log);
           }
         },
-      });
+      }) as FalResponse;
 
       console.log("FAL AI result:", result);
 
@@ -78,29 +91,31 @@ export async function POST(request: Request) {
         syncedVideoUrl,
       });
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Detailed error:", error);
+      const falError = error as FalError;
       
       // Check if error is from FAL API authentication
-      if (error.status === 403 || (error.body && error.body.status === 403)) {
+      if (falError.status === 403 || (falError.body && falError.body.status === 403)) {
         return NextResponse.json({ 
           error: "Authentication failed with FAL AI service. Please check your API credentials.",
-          details: error.message
+          details: falError.message
         }, { status: 403 });
       }
       
       // Handle other errors
       return NextResponse.json({ 
         error: "Failed to upload files or synchronize lipsync", 
-        details: error.message,
-        status: error.status || 500
-      }, { status: error.status || 500 });
+        details: falError.message,
+        status: falError.status || 500
+      }, { status: falError.status || 500 });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error during upload:", error);
+    const uploadError = error as Error;
     return NextResponse.json({ 
       error: "Failed to upload files to Cloudinary",
-      details: error.message 
+      details: uploadError.message 
     }, { status: 500 });
   }
 }
